@@ -2,6 +2,8 @@
 import javax.swing.*;
 
 public class SnakeGame {
+
+    public static String WORK_DIR =System.getProperty("user.dir");
     public static void main(String[] args) throws Exception{
         int boardWidth=600;
         int boardHeight=boardWidth;
@@ -18,7 +20,7 @@ public class SnakeGame {
         frame.add(Panel);
         frame.pack();
         Panel.requestFocus();
-        
+    
         
     }
 }
