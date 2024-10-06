@@ -8,6 +8,7 @@ import javax.swing.*;
 // inherits methods from JPanel and implements methods from the ActionListener and KeyListener interfaces
 public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener{
     
+    //private tile class 
     private class Tile{
         int x;
         int y;
@@ -19,37 +20,46 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
         }
     }
     
+    
+
     int boardWidth;
     int boardHeight;
-    int tileSize=25;
+    private final int tileSize=25;
     //snake
-    Tile snakeHead;
-    Tile snakeHead2;
+    private Tile snakeHead;
+    private Tile snakeHead2;
     //for the body which is a list of tiles 
-    ArrayList<Tile> snakeBody=new ArrayList<Tile>();
-    ArrayList<Tile> snakeBody2=new ArrayList<Tile>();
+    private ArrayList<Tile> snakeBody=new ArrayList<Tile>();
+    private ArrayList<Tile> snakeBody2=new ArrayList<Tile>();
 
     //food
-    Tile food;
-    Random randy;
+    private Tile food;
+    private Random randy;
     //game logic
-    Timer gameLoop;
-    int velocityX;
-    int velocityY;
-    int velocityX2;
-    int velocityY2;
-    String winner="";
-    //game state
-    int gameState;
-    int prevState=0; 
-    final int playState1=1;
-    final int playState2=2;
-    final int pauseState=3;
-    final int titleState=4;
-    final int gameOverState=6;
+    private Timer gameLoop;
+    private final int fps=120;
+    private int velocityX;
+    private int velocityY;
+    private int velocityX2;
+    private int velocityY2;
+
+    
+    private String winner="";
+    private int prevScore=0;
+    private int speedCnt=0; 
+
+
+    //game states
+    private int gameState;
+    private int prevState=0; 
+    private final int playState1=1;
+    private final int playState2=2;
+    private final int pauseState=3;
+    private final int titleState=4;
+    private final int gameOverState=6;
 
     //font
-    Font font;
+    private Font font;
 
 
     SnakeGamePanel(int boardWidth,int boardHeight){
@@ -81,7 +91,7 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
         randy=new Random();
         WheresFood();
         //timer that sets the fps and starts it
-        gameLoop=new Timer(100,this);
+        gameLoop=new Timer(fps,this);
         gameLoop.start();
         // initialising movement
         velocityX=0;
@@ -90,83 +100,114 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
         gameState=titleState;
           
     }
+    public void speedUp(){
+        //speeds up the Timer thus increasing the speed of the snake every 5 segments added to the body of 1 player and 2 player combined
+        if (snakeBody.size()%5==0&&snakeBody.size()!=prevScore&&speedCnt<7){
+            gameLoop.stop();
+            gameLoop=new Timer(fps-(snakeBody.size()/5),this);
+            gameLoop.start();
+            speedCnt++;
+            prevScore=snakeBody.size();
+        }
+        else if (snakeBody2.size()%5==0&&snakeBody2.size()!=prevScore&&speedCnt<7){
+            gameLoop.stop();
+            gameLoop=new Timer(fps-(snakeBody2.size()/5),this);
+            gameLoop.start();
+            speedCnt++;
+            prevScore=snakeBody.size();
+        }
+    }
 
     public void pauseGame(int prevState){
+        //pauses the game and captures the previous game state 
         gameState=pauseState;
         this.prevState=prevState;
         gameLoop.stop();
     }
 
     public void unpauseGame(int prevState){
+        //unpauses the game using the previously captured state
         gameState=prevState;
         gameLoop.start();
     }
     
 
+    public void drawTitle(Graphics2D g2){
+        // draws title screen
+        font=new Font("Snap ITC",Font.PLAIN,40);
+        g2.setFont(font);
+        g2.setFont(g2.getFont().deriveFont(Font.PLAIN,67f));
+        String text="Snake Library";
+        int textx= 36;
+        int texty=tileSize*10;
 
-    public void draw(Graphics2D g2){        
-        //title screen
-        if (gameState==titleState){
-            
-            Font font=new Font("Snap ITC",Font.PLAIN,40);
-            g2.setFont(font);
-            g2.setFont(g2.getFont().deriveFont(Font.PLAIN,67f));
-            String text="Snake Library";
-            int textx= 36;
-            int texty=tileSize*10;
+        g2.setColor(Color.red);
+        //g.fillRect(0,0,boardWidth,boardHeight);
+        g2.drawString(text,textx,texty);
+        g2.setColor(Color.yellow);
+        g2.drawString(text,textx-4,texty-4);
 
-            g2.setColor(Color.red);
-            //g.fillRect(0,0,boardWidth,boardHeight);
-            g2.drawString(text,textx,texty);
-            g2.setColor(Color.yellow);
-            g2.drawString(text,textx-4,texty-4);
+        textx=50;
+        texty=tileSize*12;
+        text="Press (1) for Single-Player (2) for Two-Player mode.";
+        font=new Font("Small Fonts",Font.PLAIN,22);
+        g2.setColor(Color.white);
+        g2.setFont(font);
+        g2.drawString(text,textx,texty);
+        
+    }
 
-            textx=50;
-            texty=tileSize*12;
-            text="Press (1) for Single-Player (2) for Two-Player mode.";
+    public void drawPlaystates(Graphics2D g2){ // draws playstate 1 and playstsate 2
+        
+        // score p1
+        int x=1*tileSize;
+        int y=1*tileSize;
+        String text="Player 1 Score: "+snakeBody.size();
+        font=new Font("Small Fonts",Font.PLAIN,22);
+        g2.setColor(Color.white);
+        g2.setFont(font);
+        g2.drawString(text,x,y);
+        
+        //food
+        g2.setColor(Color.magenta);
+        g2.fillOval(food.x*tileSize,food.y*tileSize,tileSize,tileSize);
+
+        //snake
+        g2.setColor(Color.cyan);
+        g2.fill3DRect(snakeHead.x*tileSize,snakeHead.y*tileSize,tileSize,tileSize,true);
+
+        //body
+        for (int i=0;i<snakeBody.size();i++){
+            Tile bodyPart=snakeBody.get(i);
+            g2.setColor(Color.green);
+            g2.fill3DRect(bodyPart.x*tileSize,bodyPart.y*tileSize,tileSize,tileSize,true);
+        }
+        if (playState2==gameState){
+
+            //score p2
+            x=17*tileSize;
+            y=23*tileSize;
+            text="Player 2 Score: "+snakeBody2.size();
             font=new Font("Small Fonts",Font.PLAIN,22);
             g2.setColor(Color.white);
             g2.setFont(font);
-            g2.drawString(text,textx,texty);
-            
-        }
-        
-        if (gameState==playState1||gameState==playState2){
-            //food
-            g2.setColor(Color.magenta);
-            g2.fillOval(food.x*tileSize,food.y*tileSize,tileSize,tileSize);
+            g2.drawString(text,x,y);
 
-            //snake
-            g2.setColor(Color.cyan);
-            g2.fill3DRect(snakeHead.x*tileSize,snakeHead.y*tileSize,tileSize,tileSize,true);
+             //snake
+            g2.setColor(Color.red);
+            g2.fill3DRect(snakeHead2.x*tileSize,snakeHead2.y*tileSize,tileSize,tileSize,true);
 
             //body
-            for (int i=0;i<snakeBody.size();i++){
-                Tile bodyPart=snakeBody.get(i);
-                g2.setColor(Color.green);
-                g2.fill3DRect(bodyPart.x*tileSize,bodyPart.y*tileSize,tileSize,tileSize,true);
-            }
-            if (playState2==gameState){
-                 //snake
-                g2.setColor(Color.red);
-                g2.fill3DRect(snakeHead2.x*tileSize,snakeHead2.y*tileSize,tileSize,tileSize,true);
-
-                //body
-                for (int i=0;i<snakeBody2.size();i++){
-                    Tile bodyPart2=snakeBody2.get(i);
-                    g2.setColor(Color.orange);
-                    g2.fill3DRect(bodyPart2.x*tileSize,bodyPart2.y*tileSize,tileSize,tileSize,true);
-                }
+            for (int i=0;i<snakeBody2.size();i++){
+                Tile bodyPart2=snakeBody2.get(i);
+                g2.setColor(Color.orange);
+                g2.fill3DRect(bodyPart2.x*tileSize,bodyPart2.y*tileSize,tileSize,tileSize,true);
             }
         }
+    }
 
-        // if (gameState==pauseState){
-        //     g2.setColor(new Color(0,0,0,150));
-        //     g2.fillRect(0,0,boardWidth,boardHeight);
-        // }
-        
-        // Game Over
-        if (gameOverState==gameState){
+    public void drawGameOver(Graphics2D g2){
+            //draws game over screen
             String text="Game Over";
             int textx= 150;
             int texty=boardHeight/2;
@@ -180,7 +221,7 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
             //main
             g2.setColor(Color.white);
             g2.drawString(text,textx-4,texty-4);
-
+            // instructions
             textx=135;
             texty=tileSize*14;
             text="press (space) to return to title-screen";
@@ -188,26 +229,59 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
             g2.setColor(Color.white);
             g2.setFont(font);
             g2.drawString(text,textx,texty);
+            //
+            textx=(boardWidth/2)-60;
+            texty=20*tileSize;
+            text=winner;
+            font=new Font("Small Fonts",Font.PLAIN,22);
+            g2.setColor(Color.white);
+            g2.setFont(font);
+            g2.drawString(text,textx,texty);
 
-
-        }
-
-
+            
     }
-
+    
     public void paintComponent(Graphics g){
+        //paint component handles all the drawing in this class inheriting the same method of the Jpanel class
         super.paintComponent(g);
         Graphics2D g2= (Graphics2D)g;
-        draw(g2);
+        if (gameState==titleState){
+            drawTitle(g2);
+        }  
+        else if (gameState==playState1||gameState==playState2){
+            drawPlaystates(g2);
+        }
+        else if (gameOverState==gameState){
+            drawGameOver(g2);
+        }
+       
     }
 
     public void WheresFood(){
+        //this class randomly places the food 
         food.x=randy.nextInt(boardWidth/tileSize);
         food.y=randy.nextInt(boardHeight/tileSize);
     }
+
     // redefining move() function
     public void move(){
+        //this function handles everything related to movent such as collisions etc
         boolean ans=(gameState==playState2);
+        // when snake collides with wall
+        if (snakeHead.x*tileSize<0||snakeHead.y*tileSize<0||snakeHead.x*tileSize>=boardWidth||snakeHead.y*tileSize>=boardHeight){
+            gameState=gameOverState;
+            if (ans){
+                winner="Winner player 2";
+            }
+            
+        }
+        if (ans){
+            if (snakeHead2.x*tileSize<0||snakeHead2.y*tileSize<0||snakeHead2.x*tileSize>=boardWidth||snakeHead2.y*tileSize>=boardHeight){
+                gameState=gameOverState;
+                winner="Winner player 1";
+            }
+        
+        }
         //when the snake eats food
         if (collision(snakeHead,food)){
             snakeBody.add(new Tile(food.x,food.y));
@@ -228,7 +302,7 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
             }
         }
 
-        
+        //adding a tile to snake body
         for (int i=snakeBody.size()-1;i>=0;i--){
             Tile bodyPart=snakeBody.get(i);
             if (i == 0){
@@ -258,7 +332,6 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
             }
         }
        
-        
         //what it means for the snakehead
         snakeHead.x +=velocityX;
         snakeHead.y +=velocityY;
@@ -275,6 +348,7 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
             Tile bodyPart=snakeBody.get(i);
             if (collision(snakeHead,bodyPart)){
                 gameState=gameOverState;
+                System.out.println("collided with own body");
                 if (ans){
                     winner="Winner player 2";
                 }
@@ -299,22 +373,11 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
                 }
             }
         }
-        // when snake collides with wall
-        if (snakeHead.x*tileSize<0||snakeHead.y*tileSize<0||snakeHead.x*tileSize>boardWidth||snakeHead.y*tileSize>boardHeight){
-            gameState=gameOverState;
-            winner="Winner player 2";
-        }
-        if (ans){
-            if (snakeHead2.x*tileSize<0||snakeHead2.y*tileSize<0||snakeHead2.x*tileSize>boardWidth||snakeHead2.y*tileSize>boardHeight){
-                gameState=gameOverState;
-                winner="Winner player 1";
-            }
-        
-        }
-
-        
     }
+
+
     public boolean collision(Tile tile1, Tile tile2){
+        //this functions checks if two tiles occupy the same position therefore colliding
         return tile1.x == tile2.x && tile1.y == tile2.y;
     }
 
@@ -322,9 +385,10 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
     @Override
     //only one method to override
     public void actionPerformed(ActionEvent e){
-        //what the actionlistener is looking for and updating
+        //a method of the actionPerformed interface that performs an action in relation to the Timer
         move();
         repaint();
+        speedUp();
         if (gameOverState==gameState){
             gameLoop.stop();
         }
@@ -333,7 +397,7 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
     //KeyListener methods
     @Override
     public void keyPressed(KeyEvent e){
-
+        // a method of the keylistener interface waits for the specified keys pressed to signal an action
         if (gameState==titleState){
             if (e.getKeyCode()==KeyEvent.VK_1){
                 gameState=playState1;
@@ -349,15 +413,15 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
                 velocityX=0;
                 velocityY=-1;
             }
-            if(e.getKeyCode()==KeyEvent.VK_DOWN && velocityY!=-1){
+            else if(e.getKeyCode()==KeyEvent.VK_DOWN && velocityY!=-1){
                 velocityX=0;
                 velocityY=1;
             }
-            if(e.getKeyCode()==KeyEvent.VK_RIGHT && velocityX!=-1){
+            else if(e.getKeyCode()==KeyEvent.VK_RIGHT && velocityX!=-1){
                 velocityX=1;
                 velocityY=0;
             }
-            if(e.getKeyCode()==KeyEvent.VK_LEFT && velocityX!=1){
+            else if(e.getKeyCode()==KeyEvent.VK_LEFT && velocityX!=1){
                 velocityX=-1;
                 velocityY=0;
             }
@@ -366,15 +430,15 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
                     velocityX2=0;
                     velocityY2=-1;
                 }
-                if(e.getKeyCode()==KeyEvent.VK_S && velocityY2!=-1){
+                else if(e.getKeyCode()==KeyEvent.VK_S && velocityY2!=-1){
                     velocityX2=0;
                     velocityY2=1;
                 }
-                if(e.getKeyCode()==KeyEvent.VK_D && velocityX2!=-1){
+                else if(e.getKeyCode()==KeyEvent.VK_D && velocityX2!=-1){
                     velocityX2=1;
                     velocityY2=0;
                 }
-                if(e.getKeyCode()==KeyEvent.VK_A && velocityX2!=1){
+                else if(e.getKeyCode()==KeyEvent.VK_A && velocityX2!=1){
                     velocityX2=-1;
                     velocityY2=0;
                 }
@@ -395,6 +459,7 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
             if(e.getKeyCode() == KeyEvent.VK_SPACE){
                 if (gameState==titleState||gameState==gameOverState){
                     startGame();
+                    winner="";
                 }
             }
         }
