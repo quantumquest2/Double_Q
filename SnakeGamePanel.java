@@ -37,7 +37,7 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
     private Random randy;
     //game logic
     private Timer gameLoop;
-    private final int fps=120;
+    private final int fps=110;
     private int velocityX;
     private int velocityY;
     private int velocityX2;
@@ -45,8 +45,8 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
 
     
     private String winner="";
-    private int prevScore=0;
-    private int speedCnt=0; 
+    private int prevScore;
+    private int speedCnt; 
 
 
     //game states
@@ -98,24 +98,34 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
         velocityY=0;
         //initialising gamestate
         gameState=titleState;
+        // for speed function
+        prevScore=0;
+        speedCnt=0;
           
     }
     public void speedUp(){
         //speeds up the Timer thus increasing the speed of the snake every 5 segments added to the body of 1 player and 2 player combined
-        if (snakeBody.size()%5==0&&snakeBody.size()!=prevScore&&speedCnt<7){
-            gameLoop.stop();
-            gameLoop=new Timer(fps-(snakeBody.size()/5),this);
-            gameLoop.start();
-            speedCnt++;
-            prevScore=snakeBody.size();
+        if (gameState==playState1){
+            if (snakeBody.size()%5==0&&snakeBody.size()!=prevScore&&speedCnt<7){
+                gameLoop.stop();
+                gameLoop=new Timer(fps-(snakeBody.size()/5)*10,this);
+                gameLoop.start();
+                speedCnt++;
+                prevScore=snakeBody.size();
+            }
         }
-        else if (snakeBody2.size()%5==0&&snakeBody2.size()!=prevScore&&speedCnt<7){
-            gameLoop.stop();
-            gameLoop=new Timer(fps-(snakeBody2.size()/5),this);
-            gameLoop.start();
-            speedCnt++;
-            prevScore=snakeBody.size();
+        else{
+            int num=snakeBody2.size()+snakeBody.size();
+            if (num%5==0&& num!=prevScore&&speedCnt<7){
+                gameLoop.stop();
+                gameLoop=new Timer(fps-(num/5)*10,this);
+                gameLoop.start();
+                speedCnt++;
+                prevScore=num;
+            }
         }
+        
+        
     }
 
     public void pauseGame(int prevState){
@@ -150,6 +160,14 @@ public class SnakeGamePanel extends JPanel implements ActionListener,KeyListener
         textx=50;
         texty=tileSize*12;
         text="Press (1) for Single-Player (2) for Two-Player mode.";
+        font=new Font("Small Fonts",Font.PLAIN,22);
+        g2.setColor(Color.white);
+        g2.setFont(font);
+        g2.drawString(text,textx,texty);
+
+        textx=210;
+        texty=tileSize*14;
+        text="Press (p) pause.";
         font=new Font("Small Fonts",Font.PLAIN,22);
         g2.setColor(Color.white);
         g2.setFont(font);
